@@ -107,10 +107,6 @@ class Tokenizer:
             for col, char in enumerate(toks):
                 if not char.isprintable():
                     raise ClacSyntaxError.unprintable(filename, line+1, col+1)
-                if char == '#':
-                    if current is not None:
-                        self.tokens.append(current.token())
-                    break
                 elif char.isspace() and current is not None:
                     self.tokens.append(current.token())
                     current = None
