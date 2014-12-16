@@ -23,7 +23,7 @@ class Parser:
         self.add_labels()
         self.toposort()
         self.flatten()
-        self.inline()
+        # self.inline()
         
         #todo:
         #create list of program tokens for each SCC without inlining anything
