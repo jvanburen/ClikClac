@@ -5,7 +5,8 @@ from tokenizer import Token
 import os
 
 class C(Language):
-    header = open("header.c").read()
+    with open("header.c", 'rt') as f:
+        header = f.read()
     
     @classmethod
     def id_name(cls, s):
