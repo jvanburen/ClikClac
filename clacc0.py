@@ -30,8 +30,12 @@ class C(Language):
         return ""
     @classmethod
     def line_preamble(cls, token):
-        if cls.nopreamble: return ""
-        if isinstance(token, Token):
+        if cls.nopreamble and isinstance(token, Token):
+            if os.path.exists(token.file):
+                return "//line {} \"{}\"".format(token.ln, token.file)
+            else:
+                return "//line {}".format(token.ln)
+        elif isinstance(token, Token):
             if os.path.exists(token.file):
                 return "#line {} \"{}\"".format(token.ln, token.file)
             else:

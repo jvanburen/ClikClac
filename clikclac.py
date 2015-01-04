@@ -3,7 +3,7 @@ import sys
 
 def main():
     files = []
-    nopreamble =  '-nopreamble' in sys.argv:
+    nopreamble =  '-nopreamble' in sys.argv
     if nopreamble: sys.argv.remove("-nopreamble")
     
     if len(sys.argv) <= 1 or sys.argv[1] == '-':
