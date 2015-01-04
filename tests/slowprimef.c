@@ -9,6 +9,7 @@ typedef int32_t clac_t;
 clac_t *sp;
 clac_t *stack;
 size_t allocated;
+struct rlimit limit;
 
 #ifdef DEBUG
 static inline void CHECK_DIV(void) {
@@ -47,6 +48,9 @@ void STACK_RESIZE(void) {
   } else if (allocated > SMALL_STACK_SIZE && sp <= stack + allocated / 4) {
     allocated /= 2;
     stack = realloc(stack, allocated * sizeof(clac_t));
+  }
+  if (!stack){
+    fputs("REALLOC FAILED", stderr);
   }
 }
 
@@ -99,7 +103,7 @@ void MACRO_2special(void) {
   STACK_RESIZE();
   // line 25 "slowprime.clac"
   CHECK_SIZE(1);
-  printf("%d\n", *sp--);
+  iprint(*sp--);
   STACK_RESIZE();
   // line 25 "slowprime.clac"
   sp--;
@@ -127,8 +131,6 @@ void MACRO_isprime(void) {
 }
 void MACRO_nop(void) { return; }
 void MACRO_dup(void) {
-  if (*sp == 1777)
-    iprint(5000);
   // line 8 "slowprime.clac"
   *++sp = 1;
   STACK_RESIZE();
@@ -150,11 +152,11 @@ void MACRO_3special(void) {
   STACK_RESIZE();
   // line 26 "slowprime.clac"
   CHECK_SIZE(1);
-  printf("%d\n", *sp--);
+  iprint(*sp--);
   STACK_RESIZE();
   // line 26 "slowprime.clac"
   CHECK_SIZE(1);
-  printf("%d\n", *sp--);
+  iprint(*sp--);
   STACK_RESIZE();
   // line 26 "slowprime.clac"
   CHECK_SIZE(1);
@@ -531,7 +533,7 @@ void MACRO_prime1(void) {
   STACK_RESIZE();
   // line 29 "slowprime.clac"
   CHECK_SIZE(1);
-  printf("%d\n", *sp--);
+  iprint(*sp--);
   STACK_RESIZE();
   // line 29 "slowprime.clac"
   MACRO_loop();
@@ -675,6 +677,13 @@ LABEL12:
   return;
 }
 int main(void) {
+  printf("RLIMIT_STACK = %d\n", RLIMIT_STACK);
+  getrlimit (RLIMIT_STACK, &limit);
+  limit.rlim_cur = limit.rlim_max;
+  fprintf(stderr, "Stack Limit: before = %ld/%ld, ", limit.rlim_cur, limit.rlim_max);
+  setrlimit(RLIMIT_STACK, &limit);
+  fprintf(stderr, "after = %ld/%ld\n", limit.rlim_cur, limit.rlim_max);
+  
   allocated = SMALL_STACK_SIZE;
   stack = malloc(allocated * sizeof(clac_t));
   sp = stack - 1;
