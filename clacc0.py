@@ -5,6 +5,7 @@ from tokenizer import Token
 import os
 
 class C(Language):
+    nopreamble = False
     with open("header.c", 'rt') as f:
         header = f.read()
     
@@ -29,6 +30,7 @@ class C(Language):
         return ""
     @classmethod
     def line_preamble(cls, token):
+        if cls.nopreamble: return ""
         if isinstance(token, Token):
             if os.path.exists(token.file):
                 return "#line {} \"{}\"".format(token.ln, token.file)
@@ -96,7 +98,9 @@ class C(Language):
     def label(cls, label):
         return "{}:".format(str(label))
 
-def convert(inputs):
+def convert(inputs, **kwargs):
+    if 'nopreamble' in kwargs:
+        C.nopreamble = kwargs['nopreamble']
     p = Parser(inputs)
     defs = p.defs
     main = p.main
@@ -111,10 +115,10 @@ def convert(inputs):
         prog.append("void {}(void) {{".format(C.id_name(macro.name)))
         prog.append(C.transpile(macro))
         prog.append("return;\n}")
-    
+
     prog.append("int main(void){")
     prog.append(C.transpile(main))
     prog.append("return 0;\n}")
-   
+
     return '\n'.join(filter(None, prog))
-  
+

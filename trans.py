@@ -140,7 +140,7 @@ class Language:
         
     @classmethod
     def jmp(cls, jump):
-        NotImplemented()
+        pass
         
     @classmethod
     def cjmp(cls, token):
