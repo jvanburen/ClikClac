@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #define SMALL_STACK_SIZE 1024
 
@@ -10,27 +11,28 @@ clac_t *sp;
 clac_t *stack;
 size_t allocated;
 struct rlimit limit;
+char* base;
 
 #ifdef DEBUG
 static inline void CHECK_DIV(void) {
   if (!*sp) {
     fputs("Error: division by 0\n", stderr);
-    abort();
+    raise(SIGINT);
   } else if (*(sp - 1) == INT32_MIN && *sp == -1) {
     fputs("Error: division overflow\n", stderr);
-    abort();
+    raise(SIGINT);
   }
 }
 static inline void CHECK_SIZE(clac_t n) {
   if (sp + 1 < stack + n) {
     fputs("Error: not enough elements on stack\n", stderr);
-    abort();
+    raise(SIGINT);
   }
 }
 static inline void CHECK_PICK(void) {
   if (*sp < 0) {
     fputs("Error: pick must be positive\n", stderr);
-    abort();
+    raise(SIGINT);
   }
   CHECK_SIZE(*sp);
 }
@@ -41,30 +43,33 @@ static inline void CHECK_SIZE(clac_t n) { (void)n; }
 static inline void CHECK_PICK(void) { (void)0; }
 #endif
 
+static void list_variables(void){
+  char x;
+  fprintf(stderr, "System Stack height = %lld\nstack = %p\n   sp = %p\n size = %zu\n", base-&x, stack, sp, sp-stack);
+}
+
+
 void STACK_RESIZE(void) {
+  size_t size = sp-stack;
   if (sp >= stack + allocated) {
     allocated *= 2;
+    fprintf(stderr, "Increasing stack to %zu bytes\n", allocated);
     stack = realloc(stack, allocated * sizeof(clac_t));
+    sp = stack + size-1;
   } else if (allocated > SMALL_STACK_SIZE && sp <= stack + allocated / 4) {
     allocated /= 2;
     stack = realloc(stack, allocated * sizeof(clac_t));
+    sp = stack + size-1;
+    fprintf(stderr, "Decreasing stack to %zu bytes\n", allocated);
   }
-  if (!stack){
-    fputs("REALLOC FAILED", stderr);
+  if (stack == NULL){
+    fputs("REALLOC FAILED\n", stderr);
+    abort();
   }
+  if(allocated > 2048) list_variables();
 }
 
-static void iprint(clac_t x){
-	if (x < 0){
-		putc('-', stdout);
-		x = -x;
-	} else if (x == 0){
-		putc('0', stdout);
-		return;
-	}
-	if (x >= 10) iprint(x/10);
-	putc('0'+x%10, stdout);
-}
+
 
 void MACRO_2special(void);
 void MACRO_isnotprime(void);
@@ -677,6 +682,8 @@ LABEL12:
   return;
 }
 int main(void) {
+  char x; 
+  base = &x;
   printf("RLIMIT_STACK = %d\n", RLIMIT_STACK);
   getrlimit (RLIMIT_STACK, &limit);
   limit.rlim_cur = limit.rlim_max;

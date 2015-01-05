@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+
 #define SMALL_STACK_SIZE 1024 
 
 typedef int32_t clac_t;
@@ -21,7 +22,7 @@ static inline void CHECK_DIV(void) {
     }
 }
 static inline void CHECK_SIZE(clac_t n) {
-    if (sp + 1 < stack + n) {
+    if (stack + n > sp + 1) {
         fputs("Error: not enough elements on stack\n", stderr);
         abort();
     }
@@ -46,12 +47,37 @@ static inline void CHECK_PICK(void) {
 }
 #endif
 
-void STACK_RESIZE(void) {
+static inline void STACK_RESIZE(void) {
+    size_t size = sp - stack - 1;
     if (sp >= stack + allocated) {
         allocated *= 2;
         stack = realloc(stack, allocated*sizeof(clac_t));
+        sp = stack + size;
     } else if (allocated > SMALL_STACK_SIZE && sp <= stack + allocated / 4 ) {
         allocated /= 2;
         stack = realloc(stack, allocated*sizeof(clac_t));
+        sp = stack + size;
     }
 }
+
+static void iprint(uintmax_t x){
+	if (x >= 10) iprint(x/10);
+	putc('0'+x%10, stdout);
+}
+
+static inline void clac_print(clac_t x){
+  uintmax_t abs;
+  if (x < 0) {
+    putc('-', stdout);
+    x = ~x;
+    abs = x;
+    abs++;
+  } else if (x == 0){
+    putc('0', stdout);
+  } else {
+    abs = x;
+    iprint(x);
+  }
+  putc('\n', stdout);
+}
+

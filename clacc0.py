@@ -5,7 +5,7 @@ from tokenizer import Token
 import os
 
 class C(Language):
-    nopreamble = False
+    options = {}
     with open("header.c", 'rt') as f:
         header = f.read()
     
@@ -26,11 +26,10 @@ class C(Language):
               +"sp=stack-1;\n"
     @classmethod
     def main_cleanup(cls, macro):
-        # return "free(stack);"
-        return ""
+        return "free(stack);"
     @classmethod
     def line_preamble(cls, token):
-        if cls.nopreamble and isinstance(token, Token):
+        if 'nopreamble' in cls.options and isinstance(token, Token):
             if os.path.exists(token.file):
                 return "//line {} \"{}\"".format(token.ln, token.file)
             else:
@@ -67,7 +66,7 @@ class C(Language):
         return "CHECK_DIV(); sp--; *sp = *sp % *(sp+1);"
     @classmethod
     def output(cls, token):
-        return "printf(\"%d\\n\", *sp--);"
+        return "clac_print(*sp--);"
     @classmethod
     def input(cls, token):
         return "scanf(\"%d\", ++sp);";
@@ -103,8 +102,7 @@ class C(Language):
         return "{}:".format(str(label))
 
 def convert(inputs, **kwargs):
-    if 'nopreamble' in kwargs:
-        C.nopreamble = kwargs['nopreamble']
+    C.options = kwargs
     p = Parser(inputs)
     defs = p.defs
     main = p.main
