@@ -1,4 +1,0 @@
-: dup 1 pick ;
-: end print quit ;
-: next dup dup 1 - if next else end ;
-: main 0 input next ;
