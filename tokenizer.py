@@ -107,14 +107,16 @@ class Tokenizer:
             for col, char in enumerate(toks):
                 if not char.isprintable():
                     raise ClacSyntaxError.unprintable(filename, line+1, col+1)
-                elif char.isspace() and current is not None:
-                    self.tokens.append(current.token())
-                    current = None
                 elif current is not None:
-                    current.add_char(char)
-                else:
+                    if char.isspace():
+                        self.tokens.append(current.token())
+                        current = None
+                    else:
+                        current.add_char(char)
+                elif not char.isspace():
                     current = PartialToken(col)
                     current.add_char(char)
+                    
             if current is not None:
                 self.tokens.append(current.token())
     

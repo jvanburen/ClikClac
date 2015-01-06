@@ -1,5 +1,7 @@
+#include <signal.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <stdlib.h>
 
 
@@ -15,10 +17,10 @@ size_t allocated;
 static inline void CHECK_DIV(void) {
     if (!*sp) {
         fputs("Error: division by 0\n", stderr);
-        abort();
+        raise(SIGFPE);
     } else if (*(sp-1) == INT32_MIN && *sp == -1) {
         fputs("Error: division overflow\n", stderr);
-        abort();
+        raise(SIGFPE);
     }
 }
 static inline void CHECK_SIZE(clac_t n) {
@@ -47,18 +49,28 @@ static inline void CHECK_PICK(void) {
 }
 #endif
 
+static inline void STACK_REALLOC(void) {
+  static ptrdiff_t offset;
+  offset = sp - stack;
+  stack = realloc(stack, allocated*sizeof(clac_t));
+  if (stack == NULL) {
+    fputs("REALLOC FAILED\n", stderr);
+    raise(SIGTRAP); //for debugging
+    abort();
+  } 
+  sp = stack + offset;
+}
+
 static inline void STACK_RESIZE(void) {
-    size_t size = sp - stack - 1;
-    if (sp >= stack + allocated) {
+    if (sp + 1 >= stack + allocated) {
         allocated *= 2;
-        stack = realloc(stack, allocated*sizeof(clac_t));
-        sp = stack + size;
+        STACK_REALLOC();
     } else if (allocated > SMALL_STACK_SIZE && sp <= stack + allocated / 4 ) {
         allocated /= 2;
-        stack = realloc(stack, allocated*sizeof(clac_t));
-        sp = stack + size;
+        STACK_REALLOC();
     }
 }
+
 
 static void iprint(uintmax_t x){
 	if (x >= 10) iprint(x/10);
@@ -66,17 +78,18 @@ static void iprint(uintmax_t x){
 }
 
 static inline void clac_print(clac_t x){
-  uintmax_t abs;
+  static uintmax_t abs;
   if (x < 0) {
     putc('-', stdout);
     x = ~x;
     abs = x;
     abs++;
+    iprint(abs);
   } else if (x == 0){
     putc('0', stdout);
   } else {
     abs = x;
-    iprint(x);
+    iprint(abs);
   }
   putc('\n', stdout);
 }
