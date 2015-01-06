@@ -72,7 +72,7 @@ class C(Language):
         return "scanf(\"%d\", ++sp);";
     @classmethod
     def abort(cls, token):
-        return "sp--; *sp = *sp * *(sp+1);"
+        return "abort();"
     @classmethod
     def drop(cls, token):
         return "sp--;"
