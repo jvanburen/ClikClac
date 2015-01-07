@@ -5,6 +5,7 @@ class Label:
     def __init__(self):
         Label.count += 1
         self.N = Label.count
+        self.arg = self.N
     def __repr__(self):
         return "<Label {}:>".format(self.N)
         
@@ -14,6 +15,7 @@ class Label:
 class Jump:
     def __init__(self, label):
         self.label = label
+        self.arg = label
     def __repr__(self):
         return "<JMP->{}>".format(self.label.N)
 

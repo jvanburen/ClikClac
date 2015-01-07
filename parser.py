@@ -12,33 +12,13 @@ class Parser:
         for name, prog in inputs:
             self.T.tokenize(prog, name)
 
-        self.compile()
+        self.parse()
     
-                
-    def compile(self):
+    def parse(self):
         self.make_macros()
         self.remove_unused()
         self.resolve_dependencies()
-        self.generate_code_DG()
         self.add_labels()
-        self.toposort()
-        self.flatten()
-        self.inline()
-
-        # What happens: 
-        # create list of program tokens for each SCC without inlining anything
-        # convert if/else statements to conditional relative jumps
-        # create list of if and else statements and their (relative) offsets for each SCC
-        # topologically sort SCCs by dependencies
-        # then, in reverse topological order, for each SCC, create a list of the
-        # jump instructions and the ranges over which they operate.
-        # then, inline macros by
-        # replacing macro expansions to macros in different SCCs with the
-        # processed macro bodies (unless some code size limitation is met?) (TODO: later)
-        # Insert labels into the token streams and when inlining
-        # macros, make a copy of the bodies and update the jumps/labels to be
-        # unique from the originals (I like this idea better :D)
-        return
         
     def new_macro(self):
         try: name = next(self.T)
@@ -121,120 +101,4 @@ class Parser:
             for name in macro.dependencies:
                 deps.add(self.identifiers[name.s])
             macro.tokendependencies = macro.dependencies
-            macro.dependencies = frozenset(deps)
-        
-    def generate_code_DG(self):
-        #Tarjan's algorithm
-        sccs = set()
-        counter = 0
-        S = []
-        index = {}
-        lowlink = {}
-        
-        def sc(macro):
-            nonlocal counter
-            index[macro] = counter
-            lowlink[macro] = counter
-            counter += 1
-            S.append(macro)
-
-            for dep in macro.dependencies:
-                if dep not in index:
-                    sc(dep)
-                    lowlink[macro] = min(lowlink[macro], lowlink[dep])
-                elif dep in S:
-                    lowlink[macro] = min(lowlink[macro], index[dep])
-            if lowlink[macro] == index[macro]:
-                cur = SCMacros()
-                sccs.add(cur)
-                
-                v = None
-                while v is not macro:
-                    v = S.pop()
-                    cur.add_macro(v)
-            return
-        
-        for macro in self.macros:
-            if macro not in index:
-                sc(macro)
-        
-        self.component = {}
-        for scc in sccs:
-            for macro in scc:
-                self.component[macro] = scc
-        for scc in sccs:
-            out = set()
-            for macro in scc.out:
-                out.add(self.component[macro])
-            scc.out = out
-        self.sccs = sccs
-
-    def toposort(self):
-        sccs = []
-        incoming = {node:len(node.out) for node in self.sccs}
-        rev = {node:set() for node in self.sccs} #edge-reversed graph
-        for node in self.sccs:
-            for nbr in node.out:
-                rev[nbr].add(node)
-        q = deque(node for node in self.sccs if incoming[node] == 0)
-        while q:
-            node = q.pop()
-            sccs.append(node)
-            for nbr in rev[node]:
-                if incoming[nbr] == 1:
-                    q.appendleft(nbr)
-                incoming[nbr] -= 1
-        self.sccs = sccs
-        
-    def flatten(self):
-        #make sure that the sccs are ordered!
-        macros = []
-        for scc in self.sccs:
-            for macro in scc:
-                macros.append(macro)
-        self.macros = macros
-        self.defs = macros
-        self.main = self.identifiers['main']
-        self.defs.remove(self.main)
-
-    
-    def inline(self):
-        # import pdb; pdb.set_trace()
-        def neighbors(macro):
-            scc = self.component[macro].macros
-            for neighbor in macro.dependencies:
-                if neighbor in scc: continue
-                yield neighbor.name
-                
-        for macro in self.defs:
-            # import sys
-            # print("beforemacro:", macro.name, "tokens:", macro.tokens, file=sys.stderr)
-            nbrs = frozenset(neighbors(macro))
-            tokens = []
-            for token in macro.tokens:
-                if isinstance(token, Token) and token.s in nbrs:
-                    dep = self.identifiers[token.s]
-                    # print("copying tokens of", token.s, file=__import__("sys").stderr)
-                    tokens.extend(dep.copy_tokens())
-                else: tokens.append(token)
-
-            # print("aftermacro:", macro.name, "tokens:", tokens, file=sys.stderr)
-            macro.tokens = tokens
-            deps = frozenset(m for m in tokens if isinstance(m, ClacMacro))
-            macro.dependencies = deps
-        
-        #remove unused again
-        
-        marked = {self.main}
-        queue = [self.main]
-        
-        while queue:
-            v = queue.pop()
-            for macro in v.dependencies:
-                if macro in marked: continue
-                marked.add(macro)
-                queue.append(macro)
-        self.defs = set(m for m in self.macros if m in marked)
-        # self.defs = self.macros
-
-        
+            macro.dependencies = set(deps)

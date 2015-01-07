@@ -104,9 +104,9 @@ class Pseudocode(Language):
         p = Parser(inputs)
         defs = p.defs
         main = p.main
-        
+
         prog = []
-    
+
         for macro in defs:
             prog.append(cls.id_name(macro.name)+":")
             prog.append(cls.transpile(macro))

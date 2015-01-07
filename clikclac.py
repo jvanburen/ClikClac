@@ -1,10 +1,11 @@
-import clacc0, Pseudocode
+from clacc0 import C
+from Pseudocode import Pseudocode
 import sys
 
 def main():
     
     files = []
-    nopreamble =  '-nopreamble' in sys.argv
+    nopreamble = '-nopreamble' in sys.argv
     if nopreamble: sys.argv.remove("-nopreamble")
     
     if len(sys.argv) <= 1 or sys.argv[1] == '-':
@@ -14,7 +15,7 @@ def main():
             with open(fn, 'rt') as f:
                 files.append((fn, f.read()))
 
-    print(Pseudocode.Pseudocode.convert(files, nopreamble=nopreamble))
+    print(C.convert(files, nopreamble=nopreamble))
 
 if __name__ == '__main__':
     main()
