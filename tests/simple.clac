@@ -1,0 +1,12 @@
+: dup 1 pick ;
+: end print quit nop ;
+: compare dup 100 < ;
+: is1 1 print ;
+: is2 2 print ;
+: checkif2 dup 2 - if nop else is2 ;
+: checkif1or2 dup 1 - if checkif2 else is1 ;
+: nop ;
+: conditional compare if dup else end ;
+: inc 1 + ;
+: next dup dup inc if next else conditional ;
+: main 0 input checkif1or2 next ;

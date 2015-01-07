@@ -48,11 +48,12 @@ class Token:
         return s
     @property
     def is_integer(self):
-        return self.s.isdecimal()
+        return type(self.s) == str and self.s.isdecimal()
     @property
     def is_identifier(self):
         # return self.s.isidentifier()
-        return not self.is_reserved \
+        return type(self.s) == str \
+               and not self.is_reserved \
                and not self.is_integer \
                and not self.is_operator \
                and self.s.isprintable()

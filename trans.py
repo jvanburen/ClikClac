@@ -36,7 +36,7 @@ class Language:
         tokens = macro.tokens
         lines = []
         if macro.name == 'main':
-            lines.append(cls.main_init(macro));
+            lines.append(cls.main_init(macro))
         current = []
         for token in tokens:
             # print('transpiling', token)
@@ -67,8 +67,7 @@ class Language:
             lines.append(' '.join(line))
         if macro.name == 'main':
             lines.append(cls.main_cleanup(macro))
-        return '\n'.join(lines)
-    
+        return '  '+'\n  '.join(filter(None, lines))
     
     @classmethod
     def main_init(cls, token):

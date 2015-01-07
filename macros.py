@@ -1,3 +1,5 @@
+from tokenizer import Token
+
 class Label:
     count = 0
     def __init__(self):
@@ -41,9 +43,14 @@ class ClacMacro:
         for i, tok in enumerate(copy):
             if isinstance(tok, Label):
                 continue
-            if isinstance(tok.s, Jump):
+            elif type(tok) == CondJump or type(tok.s) == CondJump:
+                # import sys; print('asdfasdfasdfasdf', file=sys.stderr)
                 copy[i] = tok.copy()
-                copy[i].s = type(tok.s)(newlabels[tok.s.label])
+                copy[i].s = CondJump(newlabels[tok.s.label])
+            if type(tok.s) == Jump:
+                # import sys; print('copying', file=sys.stderr)
+                copy[i] = tok.copy()
+                copy[i].s = Jump(newlabels[tok.s.label])
         return copy
 
     def __hash__(self):

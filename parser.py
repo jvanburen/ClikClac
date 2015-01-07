@@ -23,25 +23,21 @@ class Parser:
         self.add_labels()
         self.toposort()
         self.flatten()
-        # self.inline()
-        
-        #todo:
-        #create list of program tokens for each SCC without inlining anything
-        #convert if/else statements to conditional relative jumps
-        #create list of if and else statements and their (relative) offsets for each SCC
-        #topologically sort SCCs by dependencies
-        #then, in reverse topological order, for each SCC, create a list of the
-        #jump instructions and the ranges over which they operate.
-        #then, inline macros by
-        #replacing macro expansions to macros in different SCCs with the
-        #processed macro bodies (unless some code size limitation is met?)
-        #when a macro is inlined, find any relevant jumps and update their offsets
-        #alternatively, insert labels into the token streams and when inlining
-        #macros, make a copy of the bodies and update the jumps/labels to be
-        #unique from the originals (I like this idea better :D)
-        
-        # sccs = self.find_scc()
-        # topo = self.topo_sort(sccs)
+        self.inline()
+
+        # What happens: 
+        # create list of program tokens for each SCC without inlining anything
+        # convert if/else statements to conditional relative jumps
+        # create list of if and else statements and their (relative) offsets for each SCC
+        # topologically sort SCCs by dependencies
+        # then, in reverse topological order, for each SCC, create a list of the
+        # jump instructions and the ranges over which they operate.
+        # then, inline macros by
+        # replacing macro expansions to macros in different SCCs with the
+        # processed macro bodies (unless some code size limitation is met?) (TODO: later)
+        # Insert labels into the token streams and when inlining
+        # macros, make a copy of the bodies and update the jumps/labels to be
+        # unique from the originals (I like this idea better :D)
         return
         
     def new_macro(self):
@@ -117,7 +113,6 @@ class Parser:
                 if token.s in marked: continue
                 marked.add(token.s)
                 queue.append(token.s)
-        
         self.macros = set(m for m in self.macros if m.name in marked)
                 
     def resolve_dependencies(self):
@@ -125,6 +120,7 @@ class Parser:
             deps = set()
             for name in macro.dependencies:
                 deps.add(self.identifiers[name.s])
+            macro.tokendependencies = macro.dependencies
             macro.dependencies = frozenset(deps)
         
     def generate_code_DG(self):
@@ -157,7 +153,6 @@ class Parser:
                     v = S.pop()
                     cur.add_macro(v)
             return
-        
         
         for macro in self.macros:
             if macro not in index:
@@ -202,27 +197,44 @@ class Parser:
         self.main = self.identifiers['main']
         self.defs.remove(self.main)
 
+    
     def inline(self):
+        # import pdb; pdb.set_trace()
         def neighbors(macro):
             scc = self.component[macro].macros
             for neighbor in macro.dependencies:
                 if neighbor in scc: continue
                 yield neighbor.name
                 
-        for macro in self.macros:
+        for macro in self.defs:
             # import sys
             # print("beforemacro:", macro.name, "tokens:", macro.tokens, file=sys.stderr)
             nbrs = frozenset(neighbors(macro))
             tokens = []
             for token in macro.tokens:
-                if isinstance(token, Token):
-                    if token.s in nbrs:
-                        dep = self.identifiers[token.s]
-                        tokens.extend(dep.copy_tokens())
-                    else: tokens.append(token)
+                if isinstance(token, Token) and token.s in nbrs:
+                    dep = self.identifiers[token.s]
+                    # print("copying tokens of", token.s, file=__import__("sys").stderr)
+                    tokens.extend(dep.copy_tokens())
                 else: tokens.append(token)
 
             # print("aftermacro:", macro.name, "tokens:", tokens, file=sys.stderr)
-            macro.tokens = tokens 
-            
-                
+            macro.tokens = tokens
+            deps = frozenset(m for m in tokens if isinstance(m, ClacMacro))
+            macro.dependencies = deps
+        
+        #remove unused again
+        
+        marked = {self.main}
+        queue = [self.main]
+        
+        while queue:
+            v = queue.pop()
+            for macro in v.dependencies:
+                if macro in marked: continue
+                marked.add(macro)
+                queue.append(macro)
+        self.defs = set(m for m in self.macros if m in marked)
+        # self.defs = self.macros
+
+        

@@ -93,34 +93,35 @@ class C(Language):
         return "CHECK_PICK(); {clac_t *i=sp - *sp; *sp = *i;};"
     @classmethod
     def call(cls, token):
-        return "{}();".format(C.id_name(token.s))
+        return "{}();".format(cls.id_name(token.s))
     @classmethod
     def integer(cls, token):
         return "*++sp = {};".format(token.s)
     @classmethod
     def label(cls, label):
         return "{}:".format(str(label))
-
-def convert(inputs, **kwargs):
-    C.options = kwargs
-    p = Parser(inputs)
-    defs = p.defs
-    main = p.main
+        
+    @classmethod
+    def convert(cls, inputs, **kwargs):
+        cls.options = kwargs
+        p = Parser(inputs)
+        defs = p.defs
+        main = p.main
+        
+        prog = [cls.header]
     
-    prog = [C.header]
-
-    for macro in defs:
-        prog.append("void {}(void);".format(C.id_name(macro.name)))
-    prog.append("int main(void);")
-
-    for macro in defs:
-        prog.append("void {}(void) {{".format(C.id_name(macro.name)))
-        prog.append(C.transpile(macro))
-        prog.append("return;\n}")
-
-    prog.append("int main(void){")
-    prog.append(C.transpile(main))
-    prog.append("return 0;\n}")
-
-    return '\n'.join(filter(None, prog))
+        for macro in defs:
+            prog.append("void {}(void);".format(cls.id_name(macro.name)))
+        prog.append("int main(void);")
+    
+        for macro in defs:
+            prog.append("void {}(void) {{".format(cls.id_name(macro.name)))
+            prog.append(cls.transpile(macro))
+            prog.append("return;\n}")
+    
+        prog.append("int main(void){")
+        prog.append(cls.transpile(main))
+        prog.append("return 0;\n}")
+    
+        return '\n'.join(filter(None, prog))
 

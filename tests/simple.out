@@ -1,0 +1,45 @@
+MACRO_dup:
+  push 1 
+   pick
+#____________________
+MACRO_inc:
+  push 1 
+   add 
+#____________________
+MACRO_nop:
+  
+#____________________
+MACRO_compare:
+  call MACRO_dup
+  push 100 
+   cmp 
+#____________________
+MACRO_end:
+   output 
+  abort 
+  call MACRO_nop
+#____________________
+MACRO_conditional:
+  call MACRO_compare
+  jmp LABEL1
+  call MACRO_dup
+  jmp LABEL2
+  @label LABEL1:
+  call MACRO_end
+  @label LABEL2:
+#____________________
+MACRO_next:
+  call MACRO_dup
+  call MACRO_dup
+  call MACRO_inc
+  jmp LABEL3
+  call MACRO_next
+  jmp LABEL4
+  @label LABEL3:
+  call MACRO_conditional
+  @label LABEL4:
+#____________________
+MAIN:
+  push 0 
+  call MACRO_next
+#____________________
