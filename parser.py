@@ -11,7 +11,6 @@ class Parser:
         self.T = Tokenizer()
         for name, prog in inputs:
             self.T.tokenize(prog, name)
-
         self.parse()
     
     def parse(self):
@@ -102,3 +101,11 @@ class Parser:
                 deps.add(self.identifiers[name.s])
             macro.tokendependencies = macro.dependencies
             macro.dependencies = set(deps)
+            
+            
+    def finalize(self):
+        #I'm a terrible programmer with no type system and I need to make 
+        # this method to convince myself that all my types are legit
+        
+        self.defs = list(self.macros)
+        assert 

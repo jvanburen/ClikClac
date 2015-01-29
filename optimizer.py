@@ -15,6 +15,7 @@ class Optimizer:
     def __init__(self, parser, options):
         self.macros = parser.macros
         self.options = options
+    
     def generate_code_DG(self):
         #Tarjan's algorithm
         sccs = set()
