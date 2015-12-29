@@ -1,0 +1,6 @@
+type program = {
+	macros : Macro list;
+};;
+type macro = 
+	| macro of (String * body);
+

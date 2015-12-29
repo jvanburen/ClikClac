@@ -1,0 +1,144 @@
+MACRO_edgecheck:
+  push 1 
+   pick
+  push 3 
+   sub 
+  push 2 
+   cmp 
+  jz LABEL19
+  push 2 
+  push 3 
+   output 
+   output 
+   drop 
+  abort 
+  jmp LABEL20
+  @label LABEL19:
+  call MACRO_primesearch1
+  @label LABEL20:
+#____________________
+MACRO_loop:
+  push 2 
+   sub 
+  call MACRO_primesearch
+#____________________
+MACRO_primesearch1:
+  push 1 
+   pick
+  push 2 
+   mod 
+  jz LABEL41
+  jmp LABEL42
+  @label LABEL41:
+  push 1 
+   sub 
+  @label LABEL42:
+  push 1 
+   pick
+  push 4 
+   cmp 
+  jz LABEL47
+  push 1 
+   pick
+  push 1 
+   sub 
+  jz LABEL45
+  push 1 
+   pick
+  jz LABEL43
+  push 0 
+  push 1 
+  jmp LABEL44
+  @label LABEL43:
+  push 0 
+  push 0 
+  @label LABEL44:
+  jmp LABEL46
+  @label LABEL45:
+  push 0 
+  push 0 
+  @label LABEL46:
+  jmp LABEL52
+  @label LABEL47:
+  push 1 
+   pick
+  push 2 
+   mod 
+  jz LABEL50
+  push 1 
+  push 1 
+   pick
+  push 2 
+   add 
+   rot 
+  call MACRO_primeinit2
+  push 1 
+   pick
+   rot 
+  push 1 
+   pick
+  push 1 
+   sub 
+  jz LABEL48
+  call MACRO_primecheck2
+  jmp LABEL49
+  @label LABEL48:
+  push 1 
+  @label LABEL49:
+  jmp LABEL51
+  @label LABEL50:
+  push 0 
+  @label LABEL51:
+  @label LABEL52:
+  jz LABEL1
+  call MACRO_prime1
+  jmp LABEL2
+  @label LABEL1:
+  call MACRO_cleanstack
+  @label LABEL2:
+#____________________
+MACRO_cleanstack:
+   swap 
+  push 1 
+   sub 
+  jz LABEL25
+  call MACRO_cleanstack
+  jmp LABEL26
+  @label LABEL25:
+  call MACRO_loop
+  @label LABEL26:
+#____________________
+MACRO_primesearch:
+  push 1 
+   pick
+  push 3 
+   cmp 
+  jz LABEL23
+  push 1 
+   pick
+  push 2 
+   sub 
+  jz LABEL53
+   drop 
+  abort 
+  jmp LABEL54
+  @label LABEL53:
+  push 2 
+   drop 
+   output 
+  abort 
+  @label LABEL54:
+  jmp LABEL24
+  @label LABEL23:
+  call MACRO_edgecheck
+  @label LABEL24:
+#____________________
+MACRO_prime1:
+   drop 
+   output 
+  call MACRO_loop
+#____________________
+MAIN:
+  input 
+  call MACRO_primesearch
+#____________________
